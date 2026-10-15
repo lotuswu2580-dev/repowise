@@ -151,6 +151,9 @@ async def test_get_change_risk_bad_revspec_returns_error(tmp_path, monkeypatch) 
     # A bogus revspec must surface an error, not a silent zero-risk score.
     assert "error" in result
     assert "does-not-exist" in result["error"]
+    assert "fatal:" in result["error"]
+    assert "Use '--'" not in result["error"]
+    assert "git <command>" not in result["error"]
     assert "score" not in result
 
 

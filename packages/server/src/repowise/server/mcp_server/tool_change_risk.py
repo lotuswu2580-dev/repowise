@@ -187,6 +187,7 @@ async def _score_change(
         return None, {"error": str(exc)}
     except subprocess.CalledProcessError as exc:
         detail = (exc.stderr or "").strip() or str(exc)
+        detail = detail.split("\nUse '--'", 1)[0].rstrip()
         return None, {"error": f"Could not read change {revspec or 'HEAD'!r}: {detail}"}
     except subprocess.TimeoutExpired:
         return None, {"error": f"git timed out reading change {revspec or 'HEAD'!r}."}

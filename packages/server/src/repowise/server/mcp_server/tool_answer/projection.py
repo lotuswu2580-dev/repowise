@@ -453,6 +453,8 @@ def _prune_fallback_targets(
 def _default_shape(
     payload: dict[str, Any], question: str, *, raw_fallbacks: list[Any] | None = None
 ) -> None:
+    if payload.get("error"):
+        return
     confidence = _shape_confidence(payload)
     why = question.lstrip().lower().startswith("why")
     if confidence == "high":

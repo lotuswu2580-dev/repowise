@@ -403,6 +403,24 @@ def _third_party_header(header: str, project: str | None) -> bool:
     return not (project and _squash(project) in _squash(comments))
 
 
+def _library_banner_text(name: str, header: str) -> str:
+    """Leading C/C++ comments, plus httplib's first include guard when present.
+
+    Unlike generic comment prefixes, ``#`` and ``--`` are code in these files.
+    Stop at code so strings and identifiers cannot masquerade as a banner.
+    """
+    remaining = header.lstrip("\ufeff \t\r\n")
+    comments = []
+    while remaining.startswith(("//", "/*")):
+        end = "\n" if remaining.startswith("//") else "*/"
+        comment, _, remaining = remaining.partition(end)
+        comments.append(comment)
+        remaining = remaining.lstrip()
+    if name == "httplib.h" and re.match(r"#[ \t]*ifndef[ \t]+CPPHTTPLIB_HTTPLIB_H\b", remaining):
+        comments.append("CPPHTTPLIB_HTTPLIB_H")
+    return "\n".join(comments)
+
+
 def _has_library_signature(header: str, alternatives: tuple[tuple[str, ...], ...]) -> bool:
     """Match any complete producer signature, including multi-marker ones."""
     head = header.casefold()
@@ -416,8 +434,9 @@ def _is_single_header_library(name: str, header: str, project: str | None) -> bo
         return False
     for pattern, alternatives in _SINGLE_HEADER_LIBRARIES.items():
         if fnmatchcase(name, pattern):
-            return _has_library_signature(header, alternatives) and not (
-                project and _squash(project) in _squash(header)
+            banner = _library_banner_text(name, header)
+            return _has_library_signature(banner, alternatives) and not (
+                project and _squash(project) in _squash(banner)
             )
     return False
 

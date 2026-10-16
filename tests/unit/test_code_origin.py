@@ -41,6 +41,8 @@ _OWN_HEADER = (
     ("exprtk.hpp", "/* C++ Mathematical Expression Toolkit Library */"),
     ("json.hpp", "// JSON for Modern C++\n// SPDX-License-Identifier: MIT\n"),
     ("json.hpp", "// https://github.com/nlohmann/json\n"),
+    ("json.hpp", "/*\nJSON for Modern C++\n*/\n"),
+    ("json.hpp", "\ufeff// JSON for Modern C++\n"),
     ("stb_image.h", "/* stb_image - public domain image loader */"),
     ("stb_sprintf.h", "/* stb_sprintf by Sean Barrett */"),
     ("doctest.h", "// doctest.h - C++ testing framework\n"),
@@ -82,6 +84,24 @@ def test_single_header_names_with_first_party_license_stay_production(name):
 ])
 def test_single_header_library_signature_requires_a_matching_name(path, header):
     assert code_origin(path, header) == "production"
+
+
+@pytest.mark.parametrize(("name", "code"), [
+    ("doctest.h", 'const char *name = "doctest";'),
+    ("doctest.h", 'const char *name = "// doctest";'),
+    ("json.hpp", 'const char *name = "JSON for Modern C++";'),
+    ("json.hpp", 'const char *name = R"(\n// JSON for Modern C++\n)";'),
+    ("doctest.h", "*doctest = 1;"),
+    ("doctest.h", "int own = 0;\n// doctest is supported by our adapter"),
+    ("CLI11.hpp", "int CLI11_options = 0;"),
+    ("catch.hpp", "#define catch_exception 1"),
+    ("doctest.h", "int doctest = 1;\n--doctest;"),
+    ("stb_image.h", "// My own public domain library\n#define stb_image_enabled 1"),
+    ("httplib.h", 'const char *author = "Yuji Hirose";\n#ifndef CPPHTTPLIB_HTTPLIB_H'),
+    ("httplib.h", '// Copyright (c) Yuji Hirose\nconst char *guard = "CPPHTTPLIB_HTTPLIB_H";'),
+])
+def test_single_header_library_markers_in_code_are_not_producer_banners(name, code):
+    assert code_origin(f"src/{name}", code, project="Acme") == "production"
 
 
 @pytest.mark.parametrize(("name", "header", "project"), [
